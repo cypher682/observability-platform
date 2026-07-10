@@ -44,8 +44,13 @@ FastAPIInstrumentor.instrument_app(app)
 
 # Simulated DB — SQLAlchemy engine so SQLAlchemyInstrumentor has something
 # real to trace. Points at the postgres service added in Stage 4.
+import os
+
 engine = create_engine(
-    "postgresql://obs_admin:changeme_local_only@postgres:5432/obs_metrics",
+    os.environ.get(
+        "DATABASE_URL",
+        "postgresql://obs_admin:changeme_local_only@postgres:5432/obs_metrics",
+    ),
     pool_pre_ping=True,
 )
 SQLAlchemyInstrumentor().instrument(engine=engine)

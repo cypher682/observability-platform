@@ -53,8 +53,7 @@ before moving on — see the Troubleshooting section at the bottom.
    📸 **Evidence #02**: screenshot this page.
 
 2. **Grafana** → http://localhost:3000
-   Login: `admin` / `changeme_local_only` (from `.env` — change this
-   before any non-local use).
+   Login: `admin` / password from your `.env` file.
    Go to Connections → Data sources. You should see **Prometheus**,
    **Loki**, and **Tempo** already listed — provisioned automatically,
    not added by hand.
