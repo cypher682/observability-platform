@@ -168,8 +168,6 @@ helm install tempo grafana/tempo \
 
 Full step-by-step validation procedures for metrics, logs, traces, custom exporters, and alert routing are documented in [TESTING-GUIDE.md](TESTING-GUIDE.md).
 
-For the completed evidence checklist containing screenshots and JSON verification artifacts, refer to [docs/evidence/CHECKLIST.md](docs/evidence/CHECKLIST.md).
-
 ---
 
 ## Lessons Learned
