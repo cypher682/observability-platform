@@ -1,0 +1,103 @@
+groups:
+  - name: host-alerts
+    rules:
+      - alert: HostHighCPU
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: critical
+          component: host
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage has been above 85% for 5 minutes on {{ $labels.instance }} (current: {{ $value | printf \"%.1f\" }}%)."
+          runbook: docs/runbooks/HostHighCPU.md
+
+      - alert: HostDiskFull
+        expr: (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: host
+        annotations:
+          summary: "Disk nearly full on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+          description: "Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is above 90% used."
+          runbook: docs/runbooks/HostDiskFull.md
+
+  - name: container-alerts
+    rules:
+      - alert: ContainerOOMKilled
+        expr: increase(container_oom_events_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: container
+        annotations:
+          summary: "Container OOM-killed: {{ $labels.name }}"
+          description: "Container {{ $labels.name }} was OOM-killed within the last 5 minutes."
+          runbook: docs/runbooks/ContainerOOMKilled.md
+
+  - name: application-alerts
+    rules:
+      - alert: AppHighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_total{status=~"5.."}[2m]))
+            /
+            sum(rate(http_server_requests_total[2m]))
+          ) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "High error rate on target-app"
+          description: "5xx error rate has exceeded 5% for 2 minutes (current: {{ $value | printf \"%.1f\" }}%)."
+          runbook: docs/runbooks/AppHighErrorRate.md
+
+      - alert: AppHighLatency
+        expr: histogram_quantile(0.99, sum(rate(http_server_duration_seconds_bucket[3m])) by (le)) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "p99 latency above 500ms on target-app"
+          description: "p99 request latency has exceeded 500ms for 3 minutes."
+          runbook: docs/runbooks/AppHighLatency.md
+
+  - name: blackbox-alerts
+    rules:
+      - alert: BlackboxEndpointDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: endpoint-probe
+        annotations:
+          summary: "Endpoint probe failing: {{ $labels.instance }}"
+          description: "Blackbox probe against {{ $labels.instance }} has been failing for 1 minute."
+          runbook: docs/runbooks/BlackboxEndpointDown.md
+
+  - name: custom-exporter-alerts
+    rules:
+      - alert: CustomExporterJobQueueHigh
+        expr: job_queue_depth > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: custom-exporter
+        annotations:
+          summary: "Job queue depth high"
+          description: "job_queue_depth has been above 100 for 5 minutes (current: {{ $value }})."
+          runbook: docs/runbooks/CustomExporterJobQueueHigh.md
+
+# ---------------------------------------------------------------------
+# NOTE on metric names used above:
+# - http_server_requests_total / http_server_duration_seconds_bucket are
+#   the metric names emitted by the OTel FastAPI auto-instrumentation via
+#   the Prometheus remote-write path. If your OTel SDK version emits
+#   slightly different metric names, check with:
+#     curl http://localhost:9090/api/v1/label/__name__/values
+#   and adjust the alert expressions to match — this is a normal part of
+#   Stage 5 verification, documented in the testing guide.
+# ---------------------------------------------------------------------

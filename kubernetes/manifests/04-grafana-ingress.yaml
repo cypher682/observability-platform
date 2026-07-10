@@ -1,0 +1,26 @@
+# Demonstrates: Ingress for external UI access.
+# Requires the minikube ingress addon: `minikube addons enable ingress`
+# Then add to /etc/hosts: <minikube ip> grafana.observability.local
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: observability
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: grafana.observability.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # Service name here matches what kube-prometheus-stack's
+                # Helm release creates by default:
+                # <release-name>-grafana. Adjust if you rename the release.
+                name: kube-prometheus-stack-grafana
+                port:
+                  number: 80

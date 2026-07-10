@@ -1,0 +1,42 @@
+# Demonstrates: RBAC (ServiceAccount + ClusterRole + ClusterRoleBinding).
+#
+# NOTE: kube-prometheus-stack's Helm chart already creates equivalent RBAC
+# automatically. This manifest exists as a standalone, hand-written
+# reference showing the exact permissions Prometheus needs and why —
+# useful both as documentation and as a KCNA/CKAD RBAC study artifact
+# (see docs/ and G3 k8s-the-hard-way-notes for the annotated version).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  # Prometheus needs read access to nodes/pods/services for service
+  # discovery (kubernetes_sd_configs), and to nodes/proxy for the
+  # cadvisor and kubelet metrics endpoints.
+  - apiGroups: [""]
+    resources: ["nodes", "nodes/proxy", "services", "endpoints", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["extensions", "networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: observability
+roleRef:
+  kind: ClusterRole
+  name: prometheus
+  apiGroup: rbac.authorization.k8s.io

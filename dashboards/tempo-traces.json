@@ -1,0 +1,59 @@
+{
+  "title": "Tempo Traces",
+  "uid": "tempo-traces",
+  "tags": ["observability-platform", "tracing"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Trace Search — target-app",
+      "type": "traces",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{ .service.name = \"target-app\" }"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Slow Traces (>500ms)",
+      "type": "traces",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 10 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{ .service.name = \"target-app\" && duration > 500ms }"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Error Traces",
+      "type": "traces",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 10 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{ .service.name = \"target-app\" && status = error }"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Service Graph",
+      "type": "nodeGraph",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [{ "queryType": "serviceMap" }]
+    }
+  ]
+}

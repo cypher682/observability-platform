@@ -1,0 +1,39 @@
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm install loki grafana/loki-stack -n observability -f loki-stack-values.yaml
+#
+# loki-stack chart deploys Loki (as a Deployment or StatefulSet depending
+# on chart version/config) + Promtail (as a DaemonSet — one pod per node,
+# exactly matching the DaemonSet requirement in the project spec).
+
+loki:
+  persistence:
+    enabled: true
+    size: 5Gi
+  config:
+    limits_config:
+      retention_period: 168h
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+promtail:
+  # Runs as a DaemonSet by default in this chart — one pod per node,
+  # each shipping that node's container logs to Loki.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  config:
+    snippets:
+      pipelineStages:
+        - docker: {}
+        - labels:
+            container:
+            stream:

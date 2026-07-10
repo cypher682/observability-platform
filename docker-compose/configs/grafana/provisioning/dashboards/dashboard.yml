@@ -1,0 +1,19 @@
+apiVersion: 1
+
+providers:
+  - name: "observability-platform"
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
+
+# This is what makes dashboards "as code": Grafana scans the mounted
+# ../dashboards folder on boot and every 30s after. Deleting the Grafana
+# volume and re-running `docker compose up` should reproduce every
+# dashboard identically — that reproducibility IS the evidence for
+# "provisioned as code, not click-and-save."

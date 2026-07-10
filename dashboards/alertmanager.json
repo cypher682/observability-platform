@@ -1,0 +1,48 @@
+{
+  "title": "Alertmanager",
+  "uid": "alertmanager-overview",
+  "tags": ["observability-platform", "alerting"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Alerts by Severity",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(ALERTS{alertstate=\"firing\"}) by (severity)",
+          "legendFormat": "{{severity}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Alerts Firing Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(ALERTS{alertstate=\"firing\"}) by (alertname)",
+          "legendFormat": "{{alertname}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Alert Detail Table",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "ALERTS{alertstate=\"firing\"}", "format": "table", "instant": true }
+      ]
+    }
+  ]
+}

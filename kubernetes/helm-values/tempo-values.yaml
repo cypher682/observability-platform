@@ -1,0 +1,22 @@
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm install tempo grafana/tempo -n observability -f tempo-values.yaml
+
+tempo:
+  retention: 168h
+  storage:
+    trace:
+      backend: local
+persistence:
+  enabled: true
+  size: 5Gi
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
+
+# NOTE: the OTel Collector and target-app also need to be deployed
+# in-cluster (see ../manifests/) pointing traces at
+# tempo.observability.svc.cluster.local:4317

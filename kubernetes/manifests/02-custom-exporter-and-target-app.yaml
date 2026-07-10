@@ -1,0 +1,110 @@
+# Demonstrates: Deployment + Service + resource limits for the two
+# hand-written services (not covered by any Helm chart).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-exporter
+  namespace: observability
+  labels:
+    app: custom-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-exporter
+  template:
+    metadata:
+      labels:
+        app: custom-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9200"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: custom-exporter
+          image: custom-exporter:local        # built locally, loaded via `minikube image load`
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9200
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9200
+            initialDelaySeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-exporter
+  namespace: observability
+  labels:
+    app: custom-exporter
+spec:
+  selector:
+    app: custom-exporter
+  ports:
+    - port: 9200
+      targetPort: 9200
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: target-app
+  namespace: observability
+  labels:
+    app: target-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: target-app
+  template:
+    metadata:
+      labels:
+        app: target-app
+    spec:
+      containers:
+        - name: target-app
+          image: target-app:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: target-app
+  namespace: observability
+  labels:
+    app: target-app
+spec:
+  selector:
+    app: target-app
+  ports:
+    - port: 8000
+      targetPort: 8000

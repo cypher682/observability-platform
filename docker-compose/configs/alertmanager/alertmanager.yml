@@ -1,0 +1,51 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default-warning
+  group_by: ["alertname", "component"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: critical-immediate
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: false
+
+    - matchers:
+        - severity="warning"
+      receiver: default-warning
+      continue: false
+
+# ---------------------------------------------------------------------
+# Inhibition: suppress warning-level noise for a component that already
+# has a firing critical alert on the same component/instance. Documented
+# for Stage 5 evidence — example: don't page on AppHighLatency if
+# HostHighCPU is already critical on the same instance (likely same root
+# cause).
+# ---------------------------------------------------------------------
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ["component", "instance"]
+
+receivers:
+  - name: default-warning
+    webhook_configs:
+      - url: "http://webhook-receiver:8080/warning"
+        send_resolved: true
+
+  - name: critical-immediate
+    webhook_configs:
+      - url: "http://webhook-receiver:8080/critical"
+        send_resolved: true
+
+# NOTE: webhook-receiver is a stub target for local sprint evidence.
+# For real use, replace with Slack incoming webhook / PagerDuty Events
+# API v2 integration URL. Silencing is done via amtool or the
+# Alertmanager UI at :9093 and is documented in docs/runbooks/.

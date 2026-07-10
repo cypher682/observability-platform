@@ -1,0 +1,54 @@
+{
+  "title": "Loki Log Explorer",
+  "uid": "loki-log-explorer",
+  "tags": ["observability-platform", "logs"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Log Volume by Container",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({compose_project=\"observability-platform\"}[1m])) by (container)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "target-app logs (all)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "expr": "{container=\"target-app\"}" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Errors across all containers",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "expr": "{compose_project=\"observability-platform\"} |= \"ERROR\"" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "webhook-receiver: alerts received",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "expr": "{container=\"webhook-receiver\"} |= \"alert received\"" }
+      ]
+    }
+  ]
+}
