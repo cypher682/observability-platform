@@ -5,7 +5,7 @@
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.35-blue?style=flat-square&logo=kubernetes)](https://kubernetes.io/)
 [![Helm](https://img.shields.io/badge/Helm-v3-blue?style=flat-square&logo=helm)](https://helm.sh/)
 
-A standalone, production-grade observability platform demonstrating end-to-end collection, storage, correlation, and alerting of metrics, logs, and traces (LGTM stack) using local Docker Compose and Kubernetes manifests. 
+A standalone, production-grade observability platform demonstrating end-to-end collection, storage, correlation, and alerting of metrics, logs, and traces (LGTM stack). Deployed via Docker Compose and Kubernetes.
 
 Rather than consuming pre-existing monitoring services, this project builds and provisions the entire telemetry pipeline from scratch, including a custom business metrics exporter, trace-to-log correlation, Alertmanager routing with noise inhibition, and dashboards-as-code.
 
@@ -89,7 +89,7 @@ observability-platform/
 ## Local Development (Docker Compose)
 
 ### Prerequisites
-- Docker Desktop running (WSL2 backend on Windows)
+- Docker Engine or Docker Desktop
 - Host ports free: `3000`, `8000`, `8085`, `8090`, `9090`, `9093`, `9100`, `9115`, `9200`
 
 ### 1. Initialize Stack
@@ -104,7 +104,7 @@ This builds custom images and spins up all 14 services.
 ### 2. Verify Data Flow
 - **Prometheus Targets:** `http://localhost:9090/targets` (confirm all targets show `UP`)
 - **FastAPI Target App:** `http://localhost:8000/docs` (endpoints `/work`, `/slow`, `/error-prone` receive traffic via background `load-generator`)
-- **Grafana UI:** `http://localhost:3000` (Login: `admin` / `changeme_local_only`)
+- **Grafana UI:** `http://localhost:3000` (Login: `admin`, password set via `.env`)
   - Go to **Dashboards** to view the 7 preloaded dashboards.
 
 ---
@@ -119,7 +119,7 @@ Start minikube and enable the Ingress addon:
 minikube start --cpus=6 --memory=8g
 minikube addons enable ingress
 ```
-*Note: Due to StatefulSet requirements for Prometheus and Loki, a minimum of 6 CPUs is recommended for local execution.*
+*Note: StatefulSets for Prometheus and Loki require sufficient cluster resources. A minimum of 6 vCPUs is recommended.*
 
 ### 2. Load Local Images
 Direct your terminal to the minikube daemon and build images:
@@ -143,7 +143,7 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
-# Install prometheus stack with admission webhooks disabled for local cluster
+# Install prometheus stack (admission webhooks disabled — not required for single-node clusters)
 helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
   -n observability \
   -f kubernetes/helm-values/kube-prometheus-stack-values.yaml \
@@ -174,10 +174,10 @@ For the completed evidence checklist containing screenshots and JSON verificatio
 
 ## Lessons Learned
 
-- **OTel Semantic Convention Changes:** OpenTelemetry metrics libraries can change metric names across versions (e.g. `http_server_duration_seconds` vs `http_server_requests_total`). Checking the raw endpoint `/api/v1/label/__name__/values` inside Prometheus is a critical debugging step before building dashboards.
-- **Docker Socket Mounts on Windows:** Accessing host logs from Promtail using the `/var/run/docker.sock` mount requires sharing permissions to be explicitly enabled in Docker Desktop resources settings.
-- **Liveness Probes Under Resource Throttling:** When Minikube is CPU-starved, pods like Tempo will execute clean starts but get SIGTERM'd because liveness probe check intervals timeout under CPU wait cycles. Setting realistic resource requests is key.
+- **OTel Semantic Convention Changes:** OpenTelemetry metrics libraries can change metric names across versions (e.g. `http_server_duration_seconds` vs `http_server_requests_total`). Checking raw Prometheus labels via `/api/v1/label/__name__/values` is the fastest debugging step before building dashboards.
+- **Docker Socket Mounts:** Promtail's auto-discovery via `/var/run/docker.sock` requires the socket to be explicitly shared with the container. Verify this in your Docker engine settings if log ingestion is not working.
+- **Liveness Probes Under Resource Pressure:** Under heavy scheduling load, liveness probe intervals can timeout before a pod's initialization completes, triggering unnecessary container restarts. Setting realistic resource requests and conservative startup probe delays prevents cascading restarts.
 
 ---
 
-*Built by [cypher682](https://github.com/cypher682) — part of the 2026 portfolio build.*
+*Built by [cypher682](https://github.com/cypher682)*
