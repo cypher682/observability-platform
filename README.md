@@ -11,6 +11,17 @@ Rather than consuming pre-existing monitoring services, this project builds and 
 
 ---
 
+## Highlights
+
+- Full LGTM stack (Loki, Grafana, Tempo, Prometheus) provisioned with vendor-neutral OpenTelemetry Collector
+- End-to-end trace-to-log correlation: click any Loki log line to jump to the matching Tempo trace waterfall
+- Custom Python Prometheus exporter simulating real-world business metrics (queue depth, webhook success rates, active sessions)
+- 7 Grafana dashboards-as-code auto-provisioned on startup via JSON declarations — zero manual UI configuration
+- Alertmanager routing engine with multi-severity webhook dispatch and noise inhibition rules
+- Dual deployment targets: 14-container Docker Compose stack for local dev and Helm v3 / K8s manifests for Kubernetes
+
+---
+
 ## Architecture
 
 ![Observability Platform Architecture](docs/observability_architecture.svg)
